@@ -61,6 +61,7 @@ joinFactorsByVariable = joinFactorsByVariableWithCallTracking()
 ########### ########### ###########
 
 def joinFactors(factors: List[Factor]):
+    factors=list(factors)
     """
     Input factors is a list of factors.  
     
@@ -103,7 +104,24 @@ def joinFactors(factors: List[Factor]):
 
 
     "*** YOUR CODE HERE ***"
-    raiseNotDefined()
+    unconditioned = set()
+    all_vars      = set()
+    for factor in factors:
+        unconditioned = unconditioned.union(set(factor.unconditionedVariables()))
+        all_vars = all_vars.union(factor.variablesSet())
+    conditioned = all_vars - unconditioned
+    variableDomainsDict = factors[0].variableDomainsDict()
+    
+    #define new factor variable
+    new_factor = Factor(inputConditionedVariables=list(conditioned), inputUnconditionedVariables=list(unconditioned), inputVariableDomainsDict=variableDomainsDict)
+    # calcu new probability
+    for assignment in new_factor.getAllPossibleAssignmentDicts():
+        product = 1.0
+        for factor in factors:
+            product *= factor.getProbability(assignment)
+        new_factor.setProbability(assignment, product)
+        
+    return new_factor
     "*** END YOUR CODE HERE ***"
 
 ########### ########### ###########
@@ -154,7 +172,24 @@ def eliminateWithCallTracking(callTrackingList=None):
                     "unconditionedVariables: " + str(factor.unconditionedVariables()))
 
         "*** YOUR CODE HERE ***"
-        raiseNotDefined()
+        #define new factor variable
+        unconditioned = list(factor.unconditionedVariables())
+        conditioned = list(factor.conditionedVariables())
+        variableDomainsDict = factor.variableDomainsDict()
+        unconditioned.remove(eliminationVariable)
+        new_factor = Factor(inputConditionedVariables=conditioned, inputUnconditionedVariables=unconditioned, inputVariableDomainsDict=variableDomainsDict)
+        
+        #sum out
+        for assignment in new_factor.getAllPossibleAssignmentDicts():
+            total_prob = 0.0
+            for val in variableDomainsDict[eliminationVariable]:
+                extended = assignment.copy()
+                extended[eliminationVariable] = val
+                total_prob += factor.getProbability(extended)
+            new_factor.setProbability(assignment, total_prob)
+
+        
+        return new_factor
         "*** END YOUR CODE HERE ***"
 
     return eliminate

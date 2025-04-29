@@ -56,12 +56,29 @@ def constructBayesNet(gameState: hunters.GameState):
     Y_RANGE = gameState.getWalls().height
     MAX_NOISE = 7
 
-    variables = []
+    variables = [PAC, GHOST0, GHOST1, OBS0, OBS1]
     edges = []
     variableDomainsDict = {}
-
+    positions=[]
     "*** YOUR CODE HERE ***"
-    raiseNotDefined()
+    for x in range(X_RANGE):
+        for y in range(Y_RANGE):
+            #str squareInfo = gameState.squareInfo
+            
+            positions.append((x, y))
+    #shallow copy
+    variableDomainsDict[PAC]      = positions[:]
+    variableDomainsDict[GHOST0]   = positions[:]
+    variableDomainsDict[GHOST1]   = positions[:]
+    
+    maxTrueDist =(X_RANGE - 1) + (Y_RANGE-1)
+    obsDomain   = list(range(0, maxTrueDist + MAX_NOISE + 1))
+    variableDomainsDict[OBS0] = obsDomain[:]
+    variableDomainsDict[OBS1] = obsDomain[:]
+    
+    edges = [ (PAC,  OBS0), (GHOST0, OBS0), (PAC,  OBS1), (GHOST1, OBS1)]
+
+    
     "*** END YOUR CODE HERE ***"
 
     net = bn.constructEmptyBayesNet(variables, edges, variableDomainsDict)
@@ -182,7 +199,15 @@ def inferenceByVariableEliminationWithCallTracking(callTrackingList=None):
             eliminationOrder = sorted(list(eliminationVariables))
 
         "*** YOUR CODE HERE ***"
-        raiseNotDefined()
+        factors_list = bayesNet.getAllCPTsWithEvidence(evidenceDict=evidenceDict)
+        for var in eliminationOrder:
+            factors_list, jointFactor = joinFactorsByVariable(factors_list, var)
+            if len(jointFactor.unconditionedVariables()) > 1:
+                reducedFactor = eliminate(jointFactor, var)
+                factors_list.append(reducedFactor)
+                
+        finalJoint = joinFactors(factors_list)
+        return normalize(finalJoint)
         "*** END YOUR CODE HERE ***"
 
 
@@ -322,8 +347,17 @@ class DiscreteDistribution(dict):
         >>> empty
         {}
         """
+        
         "*** YOUR CODE HERE ***"
-        raiseNotDefined()
+       
+        total = self.total()
+        if total == 0 : return
+        #new_dist = DiscreteDistribution()
+        items = list(self.items())
+        for key, val in items:
+            print(val)
+            self[key] =  val/total
+        
         "*** END YOUR CODE HERE ***"
 
     def sample(self):
@@ -348,7 +382,7 @@ class DiscreteDistribution(dict):
         0.0
         """
         "*** YOUR CODE HERE ***"
-        raiseNotDefined()
+        # raiseNotDefined()
         "*** END YOUR CODE HERE ***"
 
 
