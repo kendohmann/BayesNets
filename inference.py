@@ -12,7 +12,7 @@
 # Pieter Abbeel (pabbeel@cs.berkeley.edu).
 
 
-import random
+import random as rand
 import itertools
 from typing import List, Dict, Tuple
 import busters
@@ -217,7 +217,7 @@ inferenceByVariableElimination = inferenceByVariableEliminationWithCallTracking(
 
 def sampleFromFactorRandomSource(randomSource=None):
     if randomSource is None:
-        randomSource = random.Random()
+        randomSource = rand.Random()
 
     def sampleFromFactor(factor, conditionedAssignments=None):
         """
@@ -351,11 +351,12 @@ class DiscreteDistribution(dict):
         "*** YOUR CODE HERE ***"
        
         total = self.total()
+        # print(f"total: {total}\n")
+        # print(f"self: {self}\n")
         if total == 0 : return
         #new_dist = DiscreteDistribution()
         items = list(self.items())
         for key, val in items:
-            print(val)
             self[key] =  val/total
         
         "*** END YOUR CODE HERE ***"
@@ -382,7 +383,17 @@ class DiscreteDistribution(dict):
         0.0
         """
         "*** YOUR CODE HERE ***"
-        # raiseNotDefined()
+        N = self.total()
+        if N != 1:  self.normalize()
+        if N == 0: return
+        # samples = [self.sample() for _ in range(int(N))]
+        r = rand.random() * N
+        total = 0.0
+        for key, weight in self.items():
+            total += weight
+            if r <= total:
+                return key
+        return 0
         "*** END YOUR CODE HERE ***"
 
 
@@ -457,7 +468,22 @@ class InferenceModule:
         Return the probability P(noisyDistance | pacmanPosition, ghostPosition).
         """
         "*** YOUR CODE HERE ***"
-        raiseNotDefined()
+        #ghost in jail
+        if ghostPosition == jailPosition:
+            if noisyDistance is None:
+                return 1.0
+            else:
+                return 0.0
+            
+        #no reading from sensors
+        if noisyDistance is None:
+            return 0.0
+        
+        #general case
+        true_distance = manhattanDistance(pacmanPosition, ghostPosition)
+
+        return busters.getObservationProbability(noisyDistance=noisyDistance, trueDistance=true_distance)
+
         "*** END YOUR CODE HERE ***"
 
     def setGhostPosition(self, gameState, ghostPosition, index):
@@ -570,7 +596,16 @@ class ExactInference(InferenceModule):
         position is known.
         """
         "*** YOUR CODE HERE ***"
-        raiseNotDefined()
+        
+        
+        for pos in self.allPositions:
+            observation_prob= self.getObservationProb(noisyDistance=observation, pacmanPosition=gameState.getPacmanPosition() , ghostPosition=pos, jailPosition=self.getJailPosition())
+        self.beliefs[pos] *= observation_prob
+        
+        for x in self.allPositions:
+            prior = self.beliefs[x]
+            likelihood = self.getObservationProb(self.obs, gameState.getPacmanPosition(), x, self.getJailPosition())
+            self.beliefs[x] = prior * likelihood
         "*** END YOUR CODE HERE ***"
         self.beliefs.normalize()
     
